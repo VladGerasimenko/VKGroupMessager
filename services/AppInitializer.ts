@@ -118,8 +118,7 @@ export class AppInitializer extends VKAPIInitializer{
                         owner_id: -groupId,
                         message: randomMessage,
                         access_token: this.hostToken
-                    })
-                }, this.rpsTimeout)
+                })}, this.rpsTimeout)
             }
         }
     }
