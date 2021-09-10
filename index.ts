@@ -12,7 +12,7 @@ async function start() {
     let initializer = new GroupStandInitializer();
     let initData: Map<string, any> = await initializer.initGroupStand()
     console.log(`App data is ready! Target group is ${initData.get('groupId')}`)
-    await initializer.destroyGroupStand()
+    // await initializer.destroyGroupStand()
 
     app.listen(port, () => {
         console.log(`Server is running on http://localhost:${port}`);

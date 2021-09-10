@@ -1,6 +1,7 @@
 import {GroupsGetExtendedResponse, WallGetResponse} from "node-vk-sdk/distr/src/generated/Responses";
 import {GroupsGroup} from "node-vk-sdk/distr/src/generated/Models";
 import {AbstractStand} from "./AbstractStand";
+import {delay} from "node-vk-sdk/distr/src/api/time";
 
 export class GroupStandInitializer extends AbstractStand{
     private groupStandData: Map<string, any> = new Map<string, any>()
@@ -78,7 +79,6 @@ export class GroupStandInitializer extends AbstractStand{
         }))
     }
 
-    //Fix rps trouble
     private async prepareGroupWall(groupId: number): Promise<void> {
         let wallRes: WallGetResponse = await this.vkApi.wallGet({
             owner_id: -groupId,
@@ -89,10 +89,12 @@ export class GroupStandInitializer extends AbstractStand{
             let diff: number = this.wallItemsCount - wallRes.items.length
             for (let i = 0; i < diff; i++) {
                 let randomMessage = this.generateRandomWallPost(Math.random() * 100);
-                    await this.vkApi.wallPost({
+                await delay(this.rpsTimeout).then(() => {
+                    this.vkApi.wallPost({
                         owner_id: -groupId,
                         message: randomMessage,
                         access_token: this.hostToken
+                    })
                 })
             }
         }
