@@ -1,11 +1,9 @@
 import {VKAPIInitializer} from "../VKAPIInitializer";
-import {VKApiExtended} from "../VKApiExtended";
 
 const config = require('./../../config/config.json')
 const users_data = require('./../../resources/users_data.json')
 
 export abstract class AbstractStand extends VKAPIInitializer{
-    protected vkApi: VKApiExtended = this.getVKApi()
     protected groupName: string = ""
     protected wallItemsCount: number = 0
     protected hostId: number = 0
@@ -13,7 +11,7 @@ export abstract class AbstractStand extends VKAPIInitializer{
     protected rpsTimeout: number = 0
     protected usersData: Map<number,string> = new Map<number, string>()
 
-    constructor() {
+    protected constructor() {
         super();
         this.init()
     }

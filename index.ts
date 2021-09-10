@@ -1,5 +1,6 @@
 import express, {Request, Response } from "express";
 import {GroupStandInitializer} from "./services/stands/GroupStandInitializer";
+import {RequestsService} from "./services/RequestsService";
 
 const app: express.Application = express();
 const port = 8080;
@@ -10,9 +11,9 @@ app.use(express.urlencoded({extended: true}));
 
 async function start() {
     let initializer = new GroupStandInitializer();
+    let reqService: RequestsService = new RequestsService()
     let initData: Map<string, any> = await initializer.initGroupStand()
     console.log(`App data is ready! Target group is ${initData.get('groupId')}`)
-    // await initializer.destroyGroupStand()
 
     app.listen(port, () => {
         console.log(`Server is running on http://localhost:${port}`);
