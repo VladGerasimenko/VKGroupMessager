@@ -5,6 +5,7 @@ export abstract class VKAPIInitializer {
     protected getVKApi(): VKApiExtended {
         return new VKApiExtended({
             logger: new ConsoleLogger(),
+            requestsPerSecond: 1
         })
     }
 }

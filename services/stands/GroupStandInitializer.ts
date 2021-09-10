@@ -1,61 +1,26 @@
-import {VKAPIInitializer} from "./VKAPIInitializer";
-import {VKApiExtended} from "./VKApiExtended";
 import {GroupsGetExtendedResponse, WallGetResponse} from "node-vk-sdk/distr/src/generated/Responses";
 import {GroupsGroup} from "node-vk-sdk/distr/src/generated/Models";
+import {AbstractStand} from "./AbstractStand";
 
-const config = require('./../config/config.json')
-const users_data = require('./../resources/users_data.json')
-
-export class AppInitializer extends VKAPIInitializer{
-
-    private vkApi: VKApiExtended = this.getVKApi()
-    private readonly groupName: string
-    private readonly wallItemsCount: number
-    private readonly hostId: number
-    private readonly hostToken: string
-    private readonly rpsTimeout: number
-    private usersData: Map<number,string> = new Map<number, string>()
-
+export class GroupStandInitializer extends AbstractStand{
+    private groupStandData: Map<string, any> = new Map<string, any>()
 
     constructor() {
         super();
-        this.fillInUsersData()
-        let host: Map<number, string> = this.generateHost()
-        this.hostId = host.keys().next().value
-        this.hostToken = host.values().next().value
-        this.groupName = config.groupName
-        this.wallItemsCount = config.wallItemsCount
-        this.rpsTimeout = config.rps_timeout
     }
 
-    public async prepareInitialData(): Promise<number> {
+    public async initGroupStand(): Promise<Map<string, any>> {
         let groupId: number = await this.prepareGroup()
-        this.addUsersToGroup(groupId)
-        this.prepareGroupWall(groupId)
-        return groupId
+        this.addUsersToGroup(groupId).then(() => {
+            this.prepareGroupWall(groupId)
+        })
+        this.groupStandData.set("groupId", groupId)
+        this.groupStandData.set("usersData", this.usersData)
+        return this.groupStandData
     }
 
-    private fillInUsersData() {
-        //User3 and User4 have unconfirmed phone numbers
-        //So now it is blocker for join these users to group through API
-
-        // this.usersData.set(users_data.user1.id, users_data.user1.token)
-        //               .set(users_data.user2.id, users_data.user2.token)
-        //               .set(users_data.user3.id, users_data.user3.token)
-        //               .set(users_data.user4.id, users_data.user4.token)
-        //               .set(users_data.user5.id, users_data.user5.token)
-
-        this.usersData.set(users_data.user1.id, users_data.user1.token)
-            .set(users_data.user2.id, users_data.user2.token)
-            .set(users_data.user5.id, users_data.user5.token)
-    }
-
-    private generateHost(): Map<number, string>{
-        let host: Map<number, string> = new Map<number, string>()
-        let keys: Array<number> = [...this.usersData.keys()]
-        let randomKey: number = keys[Math.floor(Math.random() * keys.length)];
-        host.set(randomKey, <string>this.usersData.get(randomKey))
-        return host
+    public async destroyGroupStand(): Promise<void> {
+        await this.removeUsersFromGroup()
     }
 
     private generateRandomWallPost(length: number): string {
@@ -87,6 +52,15 @@ export class AppInitializer extends VKAPIInitializer{
         return result[0]
     }
 
+    private async removeUsersFromGroup(): Promise<void> {
+        this.usersData.forEach((async (value, key, map) => {
+                await this.vkApi.groupsLeave({
+                    group_id: this.groupStandData.get('groupId'),
+                    access_token: value
+                })
+        }))
+    }
+
     private async addUsersToGroup(groupId: number): Promise<void> {
         this.usersData.forEach((async (value, key, map) => {
             let isMember: number = await this.vkApi.groupsIsMember({
@@ -104,21 +78,22 @@ export class AppInitializer extends VKAPIInitializer{
         }))
     }
 
+    //Fix rps trouble
     private async prepareGroupWall(groupId: number): Promise<void> {
         let wallRes: WallGetResponse = await this.vkApi.wallGet({
             owner_id: -groupId,
             access_token: this.hostToken
         })
+
         if (wallRes.items.length < this.wallItemsCount) {
             let diff: number = this.wallItemsCount - wallRes.items.length
             for (let i = 0; i < diff; i++) {
                 let randomMessage = this.generateRandomWallPost(Math.random() * 100);
-                setTimeout(async () => {
                     await this.vkApi.wallPost({
                         owner_id: -groupId,
                         message: randomMessage,
                         access_token: this.hostToken
-                })}, this.rpsTimeout)
+                })
             }
         }
     }
