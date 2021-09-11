@@ -1,5 +1,5 @@
 {
   "groupName": "o3Club",
   "wallItemsCount": 10,
-  "rps_timeout": 3000
+  "rps_timeout": 1000
 }
